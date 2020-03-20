@@ -8,7 +8,11 @@ import (
 	"./spotify"
 )
 
-const ScopeUserReadPrivate = "user-read-private"
+const (
+	ScopeUserReadPrivate  = "user-read-private"
+	ScopeUserFollowRead   = "user-follow-read"
+	ScopeUserFollowModify = "user-follow-modify"
+)
 
 // redirectURI is the OAuth reditect URI for the application
 const RedirectURI = "http://localhost:8080/callback"
@@ -16,7 +20,7 @@ const RedirectURI = "http://localhost:8080/callback"
 // Instance of an error type, auth Client and the state
 var (
 	err     error
-	auth    = spotify.NewAuthenticator(RedirectURI, ScopeUserReadPrivate)
+	auth    = spotify.NewAuthenticator(RedirectURI, ScopeUserReadPrivate, ScopeUserFollowRead, ScopeUserFollowModify)
 	channel = make(chan *spotify.Client)
 	state   = "abc123"
 )
@@ -24,23 +28,38 @@ var (
 func main() {
 
 	http.HandleFunc("/callback", completeAuthorization)
+
+	http.HandleFunc("/me/following?type=artist", func(w http.ResponseWriter, r *http.Request) {})
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		log.Println("Got request for : ", r.URL.String())
 	})
-	go http.ListenAndServe(":8080", nil)
 
-	url := auth.AuthURL(state)
-	fmt.Println("Please log in to Spotify : ", url)
+	go func() {
+		url := auth.AuthURL(state)
+		fmt.Println("Please log in to Spotify : ", url)
 
-	//wait for the auth to complete
-	client := <-channel
+		//wait for the auth to complete
+		client := <-channel
 
-	// use the client to make calls that require authorization
-	user, err := client.CurrentUser()
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println("You are logged in as : ", user.DisplayName)
+		// use the client to make calls that require authorization
+		user, err := client.CurrentUser()
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("You are logged in as : ", user.DisplayName)
+
+		artists, err := client.FollowedList(-1, "")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		for i, a := range artists.Artists {
+			fmt.Println(i, a.Name)
+		}
+	}()
+
+	http.ListenAndServe(":8080", nil)
 
 	// Creating a connection to DB
 	//Config.DB, err = gorm.Open("mysql", "root:mypassword@/followers")

@@ -83,17 +83,6 @@ type Error struct {
 
 /////////////////////////// ********* FUNCTIONS ********* ///////////////////////////////
 
-func (c *Client) CurrentUser() (*PrivateUser, error) {
-	var result PrivateUser
-
-	err := c.get(c.baseURL+"me", &result)
-	if err != nil {
-		return nil, err
-	}
-
-	return &result, nil
-}
-
 // Return the response
 func (c *Client) get(url string, result interface{}) error {
 	for {

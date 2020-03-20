@@ -29,6 +29,7 @@ func NewAuthenticator(redirectURL string, scopes ...string) Authenticator {
 		ClientID:     os.Getenv("SPOTIFY_ID"),
 		ClientSecret: os.Getenv("SPOTIFY_SECRET"),
 		RedirectURL:  redirectURL,
+		Scopes:       scopes,
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  AuthURL,
 			TokenURL: TokenURL,
