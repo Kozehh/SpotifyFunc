@@ -14,7 +14,7 @@ const (
 	ScopeUserFollowModify = "user-follow-modify"
 )
 
-// redirectURI is the OAuth reditect URI for the application
+// RedirectURI is the OAuth reditect URI for the application
 const RedirectURI = "http://localhost:8080/callback"
 
 // Instance of an error type, auth Client and the state
@@ -49,13 +49,23 @@ func main() {
 		}
 		fmt.Println("You are logged in as : ", user.DisplayName)
 
-		artists, err := client.FollowedList(50, "")
-		if err != nil {
-			log.Fatal(err)
-		}
+		var lastArtistID = ""
+		for {
+			artists, err := client.FollowedList(50, lastArtistID)
+			if err != nil {
+				log.Fatal(err)
+			}
 
-		for i, a := range artists.Artists {
-			fmt.Println(i, a.Name)
+			for i, a := range artists.Artists {
+				fmt.Println(i, a.Name)
+				if artists.CursorBasedObj.Next != "" && i == 49 {
+					lastArtistID = a.ID
+				}
+			}
+
+			if artists.CursorBasedObj.Next == "" {
+				break
+			}
 		}
 	}()
 

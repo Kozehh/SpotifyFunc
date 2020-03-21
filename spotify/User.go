@@ -75,7 +75,7 @@ type Artist struct {
 	Genres []string `json:"genres"`
 	// A link to the Web API endpoint for this artist.
 	Endpoint string `json:"href"`
-	// The Spotify user ID for the artist.
+	// The Spotify ID for the artist
 	ID string `json:"id"`
 	// Images of the artist
 	Images []Image `json:"images"`
