@@ -27,8 +27,10 @@ var (
 
 func main() {
 
+	// Calls 
 	http.HandleFunc("/callback", completeAuthorization)
 
+	// Register the handle function with the 'Get User's Followed Artist' pattern
 	http.HandleFunc("/me/following?type=artist", func(w http.ResponseWriter, r *http.Request) {})
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -49,7 +51,7 @@ func main() {
 		}
 		fmt.Println("You are logged in as : ", user.DisplayName)
 
-		artists, err := client.FollowedList(-1, "")
+		artists, err := client.FollowedList(50, "")
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -83,6 +85,8 @@ func main() {
 }
 
 func completeAuthorization(w http.ResponseWriter, r *http.Request) {
+
+	// Get the token using the new authenticator 
 	tok, err := auth.Token(state, r)
 	if err != nil {
 		http.Error(w, "Couldn't get token.", http.StatusForbidden)
@@ -92,7 +96,9 @@ func completeAuthorization(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		log.Fatalf("State mismatch : %s != %s\n", st, state)
 	}
-	// use the token to get an authenticated client
+
+	// if the state returned is good and we received a token
+	// Use the token to get an authenticated client
 	client := auth.NewClient(tok)
 	fmt.Fprintf(w, "Login Completed!")
 	channel <- &client

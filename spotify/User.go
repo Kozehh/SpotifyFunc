@@ -5,8 +5,12 @@ import (
 	"strconv"
 )
 
+// //////////////////////////////////////////////////////////////////////////// //
+// --------------------------------  STRUCTS  -------------------------------- //
+// ////////////////////////////////////////////////////////////////////////// //
+
+// Cursor : Key used to find the next page of items
 type Cursor struct {
-	// The cursor to use as key to find the next page of items
 	After string `json:"after"`
 }
 
@@ -55,7 +59,7 @@ type PrivateUser struct {
 	Birthdate string `json:"birthdate"`
 }
 
-// Artist
+// Artist : Contains information about an artist
 type Artist struct {
 	// Name of the artist
 	Name string `json:"name"`
@@ -79,6 +83,8 @@ type Artist struct {
 	URI URI `json:"uri"`
 }
 
+// CursorBasedObj : aka cursor-based paging object is a container for a set of objects
+// In this case, it is used for a set of artists
 type CursorBasedObj struct {
 	// A link to the Web API endpoint returning the full result of the request
 	Link string `json:"href"`
@@ -99,11 +105,17 @@ type CursorBasedObj struct {
 	Total int `json:"total"`
 }
 
+// FullArtistCursorPage : Is the full object returned by the API Endpoint '/v1/me/following?type=artist'
 type FullArtistCursorPage struct {
 	CursorBasedObj
 	Artists []Artist `json:"items"`
 }
 
+// ////////////////////////////////////////////////////////////////////////////// //
+// --------------------------------  FUNCTIONS  -------------------------------- //
+// //////////////////////////////////////////////////////////////////////////// //
+
+// CurrentUser :
 func (c *Client) CurrentUser() (*PrivateUser, error) {
 	var result PrivateUser
 
@@ -115,6 +127,11 @@ func (c *Client) CurrentUser() (*PrivateUser, error) {
 	return &result, nil
 }
 
+// FollowedList :
+// Arg :
+// 		(1) - The maximum number of items to return. Default: 20 / Min: 1 / Max: 50 | *Put -1 to use default
+// 		(2) - The last artist ID retrieved from the previous request
+// Return : A pointer of the FullArtistCursorPage object recieved from the endpoint call
 func (c *Client) FollowedList(limit int, after string) (*FullArtistCursorPage, error) {
 	funcURL := c.baseURL + "me/following"
 
@@ -131,6 +148,8 @@ func (c *Client) FollowedList(limit int, after string) (*FullArtistCursorPage, e
 		funcURL += "?" + params
 	}
 
+	// The return value of the API Endpoint is a 'FillArtistCursorPage'
+	// which it's key is 'artists'
 	var result struct {
 		A FullArtistCursorPage `json:"artists"`
 	}

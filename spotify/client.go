@@ -10,9 +10,9 @@ import (
 	"time"
 )
 
-// TODO: REMOVE THOSE THINGS FROM HERE
-// Followers contains information about the number of people following a
+// Followers : Contains information about the number of people following a
 // particular artist or playlist.
+// TODO: REMOVE THOSE THINGS FROM HERE
 type Followers struct {
 	// The total number of followers.
 	Count uint `json:"total"`
@@ -21,7 +21,7 @@ type Followers struct {
 	Endpoint string `json:"href"`
 }
 
-// Image identifies an image associated with an item.
+// Image : Identifies an image associated with an item.
 type Image struct {
 	// The image height, in pixels.
 	Height int `json:"height"`
@@ -31,11 +31,12 @@ type Image struct {
 	URL string `json:"url"`
 }
 
-// URI identifies an artist, album, track, or category.  For example,
+// URI : Identifies an artist, album, track, or category.  For example,
 // spotify:track:6rqhFgbbKwnb9MLmUQDhG6
 type URI string
 
 ///////////////////////////// ********* CONSTANTS ********* /////////////////////////////////
+
 const (
 	// DateLayout can be used with time.Parse to create time.Time values
 	// from Spotify date strings.  For example, PrivateUser.Birthdate
@@ -71,7 +72,7 @@ type Client struct {
 	AutoRetry bool
 }
 
-// Error represents an error returned by the Spotify Web API.
+// Error : Represents an error returned by the Spotify Web API.
 type Error struct {
 	// A short description of the error.
 	Message string `json:"message"`

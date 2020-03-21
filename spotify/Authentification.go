@@ -18,12 +18,15 @@ const (
 	TokenURL = "https://accounts.spotify.com/api/token"
 )
 
+// Authenticator is a struct containing a http context and OAuth2 configurations
+// Config describes a typical 3-legged OAuth2 flow, with both the
+// client application information and the server's endpoint URLs.
 type Authenticator struct {
 	config  *oauth2.Config
 	context context.Context
 }
 
-// Return new spotify authentificator
+// NewAuthenticator : Returns new spotify authentificator
 func NewAuthenticator(redirectURL string, scopes ...string) Authenticator {
 	cfg := &oauth2.Config{
 		ClientID:     os.Getenv("SPOTIFY_ID"),
@@ -47,10 +50,14 @@ func NewAuthenticator(redirectURL string, scopes ...string) Authenticator {
 	}
 }
 
+// AuthURL : Calls OAuth2 method 'AuthCodeURL' with the current authenticator configs
+// Returns: A URL to OAuth 2.0 provider's consent page
+// that asks for permissions for the required scopes explicitly.
 func (a Authenticator) AuthURL(state string) string {
 	return a.config.AuthCodeURL(state)
 }
 
+// Token : Maps the internal token in the authenticator context with the OAuth2 token
 func (a Authenticator) Token(state string, req *http.Request) (*oauth2.Token, error) {
 	values := req.URL.Query()
 	if e := values.Get("error"); e != "" {
@@ -64,12 +71,16 @@ func (a Authenticator) Token(state string, req *http.Request) (*oauth2.Token, er
 	if actualState != state {
 		return nil, errors.New("spotify: redirect state parameter doesn't match")
 	}
+
+	// if there was no errors or mismatches, (link/refresh/map) the internal token with the OAuth Token
 	return a.config.Exchange(a.context, code)
 }
 
-// NewClient creates a Client that will use the specified access token for its API requests.
+// NewClient : Creates a Client that will use the specified access token for its API requests.
 func (a Authenticator) NewClient(token *oauth2.Token) Client {
+	// Create a new http client using the token and current context
 	client := a.config.Client(a.context, token)
+	// The app client object is now the new one created
 	return Client{
 		http:    client,
 		baseURL: baseAddress,
