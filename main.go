@@ -42,31 +42,10 @@ func main() {
 		//wait for the auth to complete
 		client := <-channel
 
-		// use the client to make calls that require authorization
-		user, err := client.CurrentUser()
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Println("You are logged in as : ", user.DisplayName)
+		GetCurrentUser(client)
 
-		var lastArtistID = ""
-		for {
-			artists, err := client.FollowedList(50, lastArtistID)
-			if err != nil {
-				log.Fatal(err)
-			}
+		GetFollowedArtists(client)
 
-			for i, a := range artists.Artists {
-				fmt.Println(i, a.Name)
-				if artists.CursorBasedObj.Next != "" && i == 49 {
-					lastArtistID = a.ID
-				}
-			}
-
-			if artists.CursorBasedObj.Next == "" {
-				break
-			}
-		}
 	}()
 
 	http.ListenAndServe(":8080", nil)
@@ -90,4 +69,36 @@ func completeAuthorization(w http.ResponseWriter, r *http.Request) {
 	client := auth.NewClient(tok)
 	fmt.Fprintf(w, "Login Completed!")
 	channel <- &client
+}
+
+func GetCurrentUser(client *spotify.Client) {
+	// use the client to make calls that require authorization
+	user, err := client.CurrentUser()
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("You are logged in as : ", user.DisplayName)
+}
+
+func GetFollowedArtists(client *spotify.Client) {
+	var lastArtistID = ""
+	for {
+		// Get the a list of followed artists
+		artists, err := client.FollowedList(50, lastArtistID)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		for i, a := range artists.Artists {
+			fmt.Println(i, a.Name)
+			if artists.CursorBasedObj.Next != "" && i == 49 {
+				lastArtistID = a.ID
+			}
+		}
+
+		// If there is no other pages, break out of the loop
+		if artists.CursorBasedObj.Next == "" {
+			break
+		}
+	}
 }
