@@ -27,15 +27,13 @@ var (
 
 func main() {
 
-	// Calls 
+	// Calls to the OAuth
 	http.HandleFunc("/callback", completeAuthorization)
 
 	// Register the handle function with the 'Get User's Followed Artist' pattern
 	http.HandleFunc("/me/following?type=artist", func(w http.ResponseWriter, r *http.Request) {})
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		log.Println("Got request for : ", r.URL.String())
-	})
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {})
 
 	go func() {
 		url := auth.AuthURL(state)
@@ -62,31 +60,11 @@ func main() {
 	}()
 
 	http.ListenAndServe(":8080", nil)
-
-	// Creating a connection to DB
-	//Config.DB, err = gorm.Open("mysql", "root:mypassword@/followers")
-
-	/*if err != nil {
-		fmt.Println("Status: ", err)
-	}*/
-
-	// The defer statement defers the execution of a func until the surroundings function returs
-	//defer Config.DB.Close()
-
-	// run the migrations: follower struct
-	//Config.DB.AutoMigrate(&Models.Follower{})
-
-	// setup routes
-	//r := Routes.SetupRouter()
-
-	// running
-	//r.Run(":8080")
-
 }
 
 func completeAuthorization(w http.ResponseWriter, r *http.Request) {
 
-	// Get the token using the new authenticator 
+	// Get the token using the new authenticator
 	tok, err := auth.Token(state, r)
 	if err != nil {
 		http.Error(w, "Couldn't get token.", http.StatusForbidden)
