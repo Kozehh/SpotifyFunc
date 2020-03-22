@@ -12,10 +12,9 @@ const (
 	ScopeUserReadPrivate  = "user-read-private"
 	ScopeUserFollowRead   = "user-follow-read"
 	ScopeUserFollowModify = "user-follow-modify"
+	// RedirectURI is the OAuth reditect URI for the application
+	RedirectURI = "http://localhost:8080/callback"
 )
-
-// RedirectURI is the OAuth reditect URI for the application
-const RedirectURI = "http://localhost:8080/callback"
 
 // Instance of an error type, auth Client and the state
 var (
@@ -31,24 +30,23 @@ func main() {
 	http.HandleFunc("/callback", completeAuthorization)
 
 	// Register the handle function with the 'Get User's Followed Artist' pattern
-	http.HandleFunc("/me/following?type=artist", func(w http.ResponseWriter, r *http.Request) {})
+	//http.HandleFunc("/me/following?type=artist", func(w http.ResponseWriter, r *http.Request) {})
+	//http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {})
+	go http.ListenAndServe(":8080", nil)
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {})
+	url := auth.AuthURL(state)
+	fmt.Println("Please log in to Spotify : ", url)
 
-	go func() {
-		url := auth.AuthURL(state)
-		fmt.Println("Please log in to Spotify : ", url)
+	//wait for the auth to complete
+	client := <-channel
 
-		//wait for the auth to complete
-		client := <-channel
+	GetCurrentUser(client)
 
-		GetCurrentUser(client)
+	// Get the list of all the artists followed
+	artists := GetFollowedArtists(client)
+	//GetArtistAlbums(artists)
+	PrintFollowedArtists(artists)
 
-		GetFollowedArtists(client)
-
-	}()
-
-	http.ListenAndServe(":8080", nil)
 }
 
 func completeAuthorization(w http.ResponseWriter, r *http.Request) {
@@ -80,25 +78,27 @@ func GetCurrentUser(client *spotify.Client) {
 	fmt.Println("You are logged in as : ", user.DisplayName)
 }
 
-func GetFollowedArtists(client *spotify.Client) {
+func GetFollowedArtists(client *spotify.Client) []spotify.Artist {
 	var lastArtistID = ""
+	var artistList = []spotify.Artist{}
 	for {
 		// Get the a list of followed artists
 		artists, err := client.FollowedList(50, lastArtistID)
+		artistList = append(artistList, artists.Artists...)
 		if err != nil {
 			log.Fatal(err)
 		}
-
-		for i, a := range artists.Artists {
-			fmt.Println(i, a.Name)
-			if artists.CursorBasedObj.Next != "" && i == 49 {
-				lastArtistID = a.ID
-			}
-		}
-
 		// If there is no other pages, break out of the loop
 		if artists.CursorBasedObj.Next == "" {
 			break
 		}
+		lastArtistID = artistList[len(artistList)-1].ID
+	}
+	return artistList
+}
+
+func PrintFollowedArtists(artists []spotify.Artist) {
+	for i, a := range artists {
+		fmt.Println(i, a.Name)
 	}
 }

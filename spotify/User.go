@@ -90,9 +90,6 @@ type CursorBasedObj struct {
 	Link string `json:"href"`
 
 	// A link to the Web API endpoint returning the full result of the request
-	Items []Artist `json:"items"`
-
-	// A link to the Web API endpoint returning the full result of the request
 	Limit int `json:"limit"`
 
 	// A link to the Web API endpoint returning the full result of the request
@@ -125,6 +122,11 @@ func (c *Client) CurrentUser() (*PrivateUser, error) {
 	}
 
 	return &result, nil
+}
+
+// GetArtistAlbums : Get all the albums of artists
+func GetArtistAlbums(artists []Artist) {
+
 }
 
 // FollowedList :
