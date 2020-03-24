@@ -3,6 +3,7 @@ package spotify
 import (
 	"net/url"
 	"strconv"
+	"strings"
 )
 
 // //////////////////////////////////////////////////////////////////////////// //
@@ -108,6 +109,34 @@ type FullArtistCursorPage struct {
 	Artists []Artist `json:"items"`
 }
 
+// SimplifiedAlbumObject : Is the full object returned by the API Endpoint '/v1/artists/{id}/albums'
+type SimplifiedAlbumObject struct {
+	// Compare to AlbumType this field represents relationship between the artist and the album
+	AlbumGroup string `json:"album_group"`
+	// The type of the album: one of “album”, “single”, or “compilation”
+	AlbumType string `json:"album_type"`
+	// The artists of the album
+	Artists              []Artist `json:"artists"`
+	ReleaseDate          string   `json:"release_date"`
+	ReleaseDatePrecision string   `json:"release_date_precision"`
+	// The markets in which the album is available
+	AvailableMarkets []string `json:"available_markets"`
+	// Known external URLs for this album
+	ExternalURLs map[string]string `json:"external_urls"`
+	// A link to the Web API endpoint providing full details of the album
+	Endpoint string `json:"href"`
+	// The Spotify ID for the album
+	ID string `json:"id"`
+	// The cover art for the album
+	Images []Image `json:"images"`
+	// The Spotify URI for the album.
+	URI URI `json:"uri"`
+	// The object type "album"
+	Type string `json:"type"`
+	// Name of the album
+	Name string `json:"name"`
+}
+
 // ////////////////////////////////////////////////////////////////////////////// //
 // --------------------------------  FUNCTIONS  -------------------------------- //
 // //////////////////////////////////////////////////////////////////////////// //
@@ -124,11 +153,6 @@ func (c *Client) CurrentUser() (*PrivateUser, error) {
 	return &result, nil
 }
 
-// GetArtistAlbums : Get all the albums of artists
-func GetArtistAlbums(artists []Artist) {
-
-}
-
 // FollowedList :
 // Arg :
 // 		(1) - The maximum number of items to return. Default: 20 / Min: 1 / Max: 50 | *Put -1 to use default
@@ -137,6 +161,7 @@ func GetArtistAlbums(artists []Artist) {
 func (c *Client) FollowedList(limit int, after string) (*FullArtistCursorPage, error) {
 	funcURL := c.baseURL + "me/following"
 
+	// Set query parameters
 	v := url.Values{}
 	v.Set("type", "artist")
 
@@ -162,4 +187,33 @@ func (c *Client) FollowedList(limit int, after string) (*FullArtistCursorPage, e
 	}
 
 	return &result.A, nil
+}
+
+func (c *Client) GetArtistAlbums(id string) ([]*SimplifiedAlbumObject, error) {
+	//funcURL := c.baseURL + "v1/artists/{id}/albums"
+
+	// Set query parameters
+	v := url.Values{}
+	/*
+
+		v.Set("include_groups", "album,single,appears_on")
+		v.Set("limit", "")
+		v.Set("offset", "")
+	*/
+
+	funcURL := c.baseURL + "artists/id/albums"
+	funcURL = strings.Replace(funcURL, "id", id, -1)
+	if params := v.Encode(); params != "" {
+		funcURL += "?" + params
+	}
+
+	var a struct {
+		Albums []*SimplifiedAlbumObject `json:"items"`
+	}
+
+	err := c.get(funcURL, &a)
+	if err != nil {
+		return nil, err
+	}
+	return a.Albums, nil
 }
