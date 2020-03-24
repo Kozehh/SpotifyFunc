@@ -10,9 +10,10 @@ import (
 )
 
 const (
-	ScopeUserReadPrivate  = "user-read-private"
-	ScopeUserFollowRead   = "user-follow-read"
-	ScopeUserFollowModify = "user-follow-modify"
+	ScopeUserReadPrivate       = "user-read-private"
+	ScopeUserFollowRead        = "user-follow-read"
+	ScopeUserFollowModify      = "user-follow-modify"
+	ScopePlaylistModifyPrivate = "playlist-modify-private"
 	// RedirectURI is the OAuth reditect URI for the application
 	RedirectURI = "http://localhost:8080/callback"
 	layoutISO   = "2006-01-02"
@@ -21,7 +22,7 @@ const (
 // Instance of an error type, auth Client and the state
 var (
 	err     error
-	auth    = spotify.NewAuthenticator(RedirectURI, ScopeUserReadPrivate, ScopeUserFollowRead, ScopeUserFollowModify)
+	auth    = spotify.NewAuthenticator(RedirectURI, ScopeUserReadPrivate, ScopeUserFollowRead, ScopeUserFollowModify, ScopePlaylistModifyPrivate)
 	channel = make(chan *spotify.Client)
 	state   = "abc123"
 )
@@ -47,42 +48,51 @@ func main() {
 	// Get the list of all the artists followed
 	followedArtists := GetFollowedArtists(client)
 
-	/*latestReleases := */
-	GetFollowedArtistsLatest(followedArtists, client)
+	latestReleases := GetFollowedArtistsLatest(followedArtists, client)
 
-	//AddLatestReleasesToPlaylist()
+	AddLatestReleasesToPlaylist(latestReleases, client)
 	//PrintFollowedArtists(artists)
 
 }
 
-func GetFollowedArtistsLatest(followedArtists []spotify.Artist, client *spotify.Client) /*[]*spotify.SimplifiedAlbumObject*/ {
-	//var newReleases = []*spotify.SimplifiedAlbumObject{}
+func AddLatestReleasesToPlaylist(latestReleases []*spotify.SimplifiedAlbumObject, c *spotify.Client) {
+	for _, l := range latestReleases {
+		tracks, err := c.GetAlbumTracks(l.ID, 50)
+		if err != nil {
+			log.Fatal(err)
+		}
+		for i, track := range tracks {
+			fmt.Println(i, track.Name)
+		}
+	}
+}
+
+func GetFollowedArtistsLatest(followedArtists []spotify.Artist, client *spotify.Client) []*spotify.SimplifiedAlbumObject {
+	var newReleases = []*spotify.SimplifiedAlbumObject{}
 
 	artistsAlbums := GetFollowedArtistAlbums(client, followedArtists)
 	for _, aa := range artistsAlbums {
 		// Check if albums released less than a month ago
-		/*monthlyReleases :=*/
-		GetMonthyReleases(aa)
-		//newReleases = append(newReleases, monthlyReleases)
-		// if so add to newReleases slice
-		// TODO : Should have a bd or keep track of the slice containing the latest releases
-		// so that if I run the code two days in a row I only get the ones that released in the past day
-
+		if isNew := GetMonthyReleases(aa); isNew {
+			// if so add to newReleases slice
+			// TODO : Should have a bd or keep track of the slice containing the latest releases
+			// so that if I run the code two days in a row I only get the ones that released in the past day
+			newReleases = append(newReleases, aa)
+		}
 	}
-
-	//return newReleases
+	return newReleases
 }
 
 // GetMonthyReleases : Check if albums released less than a month ago
 // TODO: Should implement a way to fetch a sclice (newReleases) to only return
 // the ones that were not been fetch allready this month from another use of the function
-func GetMonthyReleases(artistAlbum *spotify.SimplifiedAlbumObject) /*spotify.SimplifiedAlbumObject*/ {
+func GetMonthyReleases(artistAlbum *spotify.SimplifiedAlbumObject) bool {
 	formReleaseDate, _ := time.Parse(layoutISO, artistAlbum.ReleaseDate)
 	timeDiff := time.Since(formReleaseDate)
 	if timeDiff.Hours() < 730 {
-		fmt.Println(artistAlbum.Name, artistAlbum.ReleaseDate)
+		return true
 	}
-
+	return false
 }
 
 // GetArtistAlbums : Get all the albums of artists

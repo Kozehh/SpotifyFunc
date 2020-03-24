@@ -137,6 +137,43 @@ type SimplifiedAlbumObject struct {
 	Name string `json:"name"`
 }
 
+type Track struct {
+	Artists []Artist `json:"artists"`
+	// The markets in which the album is available
+	AvailableMarkets []string `json:"available_markets"`
+	DiscNumber       int      `json:"disc_number"`
+	Duration         int      `json:"duration_ms"`
+	Explicit         bool     `json:"explicit"`
+	// Known external URLs for this track
+	ExternalURLs map[string]string `json:"external_urls"`
+	// A link to the Web API endpoint providing full details of the album
+	Endpoint string `json:"href"`
+	// The Spotify ID for the album
+	ID         string      `json:"id"`
+	IsPlayable bool        `json:"is_playable"`
+	LinkedFrom LinkedTrack `json:"linked_from"`
+	Name       string      `json:"name"`
+	PreviewURL string      `json:"preview_url"`
+	TrackNum   int         `json:"track_number"`
+	// The Spotify URI for the album.
+	URI URI `json:"uri"`
+	// The object type "album"
+	Type string `json:"type"`
+}
+
+type LinkedTrack struct {
+	// Known external URLs for this track
+	ExternalURLs map[string]string `json:"external_urls"`
+	// A link to the Web API endpoint providing full details of the album
+	Endpoint string `json:"href"`
+	// The Spotify ID for the album
+	ID string `json:"id"`
+	// The Spotify URI for the album.
+	URI URI `json:"uri"`
+	// The object type "album"
+	Type string `json:"type"`
+}
+
 // ////////////////////////////////////////////////////////////////////////////// //
 // --------------------------------  FUNCTIONS  -------------------------------- //
 // //////////////////////////////////////////////////////////////////////////// //
@@ -216,4 +253,27 @@ func (c *Client) GetArtistAlbums(id string) ([]*SimplifiedAlbumObject, error) {
 		return nil, err
 	}
 	return a.Albums, nil
+}
+
+func (c *Client) GetAlbumTracks(albumID string, limit int) ([]*Track, error) {
+	funcURL := c.baseURL + "albums/id/tracks"
+	funcURL = strings.Replace(funcURL, "id", albumID, -1)
+
+	// Set query parameters
+	v := url.Values{}
+	v.Set("type", "artist")
+
+	if limit != -1 {
+		v.Set("limit", strconv.Itoa(limit))
+	}
+
+	var res struct {
+		Tracks []*Track `json:"items"`
+	}
+
+	err := c.get(funcURL, &res)
+	if err != nil {
+		return nil, err
+	}
+	return res.Tracks, nil
 }
