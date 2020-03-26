@@ -33,7 +33,7 @@ type Image struct {
 
 // URI : Identifies an artist, album, track, or category.  For example,
 // spotify:track:6rqhFgbbKwnb9MLmUQDhG6
-type URI string
+//type URI string
 
 ///////////////////////////// ********* CONSTANTS ********* /////////////////////////////////
 
@@ -116,6 +116,40 @@ func (c *Client) get(url string, result interface{}) error {
 	return nil
 }
 
+// `execute` executes a non-GET request. `needsStatus` describes other HTTP
+// status codes that will be treated as success. Note that we allow all 200s
+// even if there are additional success codes that represent success.
+func (c *Client) execute(req *http.Request, result interface{}, needsStatus ...int) error {
+	for {
+		resp, err := c.http.Do(req)
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+
+		if c.AutoRetry && shouldRetry(resp.StatusCode) {
+			time.Sleep(retryDuration(resp))
+			continue
+		}
+		if resp.StatusCode == http.StatusNoContent {
+			return nil
+		}
+		if (resp.StatusCode >= 300 ||
+			resp.StatusCode < 200) &&
+			isFailure(resp.StatusCode, needsStatus) {
+			return c.decodeError(resp)
+		}
+
+		if result != nil {
+			if err := json.NewDecoder(resp.Body).Decode(result); err != nil {
+				return err
+			}
+		}
+		break
+	}
+	return nil
+}
+
 // decodeError decodes an Error from an io.Reader.
 func (c *Client) decodeError(resp *http.Response) error {
 	responseBody, err := ioutil.ReadAll(resp.Body)
@@ -149,6 +183,22 @@ func (c *Client) decodeError(resp *http.Response) error {
 	}
 
 	return e.E
+}
+
+// shouldRetry determines whether the status code indicates that the
+// previous operation should be retried at a later time
+func shouldRetry(status int) bool {
+	return status == http.StatusAccepted || status == http.StatusTooManyRequests
+}
+
+// isFailure determines whether the code indicates failure
+func isFailure(code int, validCodes []int) bool {
+	for _, item := range validCodes {
+		if item == code {
+			return false
+		}
+	}
+	return true
 }
 
 func retryDuration(resp *http.Response) time.Duration {

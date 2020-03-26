@@ -48,23 +48,23 @@ func main() {
 	// Get the list of all the artists followed
 	followedArtists := GetFollowedArtists(client)
 
-	latestReleases := GetFollowedArtistsLatest(followedArtists, client)
+	latestReleasedAlbum := GetFollowedArtistsLatest(followedArtists, client)
 
-	AddLatestReleasesToPlaylist(latestReleases, client)
+	AddLatestReleasesToPlaylist(latestReleasedAlbum, client)
 	//PrintFollowedArtists(artists)
 
 }
 
-func AddLatestReleasesToPlaylist(latestReleases []*spotify.SimplifiedAlbumObject, c *spotify.Client) {
-	for _, l := range latestReleases {
+func AddLatestReleasesToPlaylist(latestReleasedAlbum []*spotify.SimplifiedAlbumObject, c *spotify.Client) {
+	var newReleasedTracks = []*spotify.Track{}
+	for _, l := range latestReleasedAlbum {
 		tracks, err := c.GetAlbumTracks(l.ID, 50)
 		if err != nil {
 			log.Fatal(err)
 		}
-		for i, track := range tracks {
-			fmt.Println(i, track.Name)
-		}
+		newReleasedTracks = append(newReleasedTracks, tracks...)
 	}
+	c.AddLatestToPlaylist(newReleasedTracks)
 }
 
 func GetFollowedArtistsLatest(followedArtists []spotify.Artist, client *spotify.Client) []*spotify.SimplifiedAlbumObject {
