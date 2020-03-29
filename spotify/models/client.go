@@ -1,4 +1,4 @@
-package spotify
+package models
 
 import (
 	"bytes"
@@ -10,31 +10,6 @@ import (
 	"time"
 )
 
-// Followers : Contains information about the number of people following a
-// particular artist or playlist.
-// TODO: REMOVE THOSE THINGS FROM HERE
-type Followers struct {
-	// The total number of followers.
-	Count uint `json:"total"`
-	// A link to the Web API endpoint providing full details of the followers,
-	// or the empty string if this data is not available.
-	Endpoint string `json:"href"`
-}
-
-// Image : Identifies an image associated with an item.
-type Image struct {
-	// The image height, in pixels.
-	Height int `json:"height"`
-	// The image width, in pixels.
-	Width int `json:"width"`
-	// The source URL of the image.
-	URL string `json:"url"`
-}
-
-// URI : Identifies an artist, album, track, or category.  For example,
-// spotify:track:6rqhFgbbKwnb9MLmUQDhG6
-//type URI string
-
 ///////////////////////////// ********* CONSTANTS ********* /////////////////////////////////
 
 const (
@@ -42,6 +17,7 @@ const (
 	// from Spotify date strings.  For example, PrivateUser.Birthdate
 	// uses this format.
 	DateLayout = "2006-01-02"
+
 	// TimestampLayout can be used with time.Parse to create time.Time
 	// values from SpotifyTimestamp strings.  It is an ISO 8601 UTC timestamp
 	// with a zero offset.  For example, PlaylistTrack's AddedAt field uses
@@ -56,7 +32,8 @@ const (
 	// request frequency is too high.
 	rateLimitExceededStatusCode = 429
 
-	baseAddress = "https://api.spotify.com/v1/"
+	// BaseAddress is the base address for all the the spotify API Endpoints
+	BaseAddress = "https://api.spotify.com/v1/"
 )
 
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -66,8 +43,8 @@ const (
 // Client is a client for working with the Spotify Web API.
 // To create an authenticated client, use the `Authenticator.NewClient` method.
 type Client struct {
-	http    *http.Client
-	baseURL string
+	Http    *http.Client
+	BaseURL string
 
 	AutoRetry bool
 }
@@ -87,7 +64,7 @@ type Error struct {
 // Return the response
 func (c *Client) get(url string, result interface{}) error {
 	for {
-		resp, err := c.http.Get(url)
+		resp, err := c.Http.Get(url)
 		if err != nil {
 			return err
 		}
@@ -121,7 +98,7 @@ func (c *Client) get(url string, result interface{}) error {
 // even if there are additional success codes that represent success.
 func (c *Client) execute(req *http.Request, result interface{}, needsStatus ...int) error {
 	for {
-		resp, err := c.http.Do(req)
+		resp, err := c.Http.Do(req)
 		if err != nil {
 			return err
 		}

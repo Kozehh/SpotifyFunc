@@ -6,7 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	"./spotify"
+	"github.com/Kozehh/SpotifyFunc/spotify"
+	"github.com/Kozehh/SpotifyFunc/spotify/models"
 )
 
 const (
@@ -23,7 +24,7 @@ const (
 var (
 	err     error
 	auth    = spotify.NewAuthenticator(RedirectURI, ScopeUserReadPrivate, ScopeUserFollowRead, ScopeUserFollowModify, ScopePlaylistModifyPrivate)
-	channel = make(chan *spotify.Client)
+	channel = make(chan *models.Client)
 	state   = "abc123"
 )
 
@@ -55,8 +56,8 @@ func main() {
 
 }
 
-func AddLatestReleasesToPlaylist(latestReleasedAlbum []*spotify.SimplifiedAlbumObject, c *spotify.Client) {
-	var newReleasedTracks = []*spotify.Track{}
+func AddLatestReleasesToPlaylist(latestReleasedAlbum []*models.SimplifiedAlbumObject, c *models.Client) {
+	var newReleasedTracks = []*models.Track{}
 	for _, l := range latestReleasedAlbum {
 		tracks, err := c.GetAlbumTracks(l.ID, 50)
 		if err != nil {
@@ -67,8 +68,8 @@ func AddLatestReleasesToPlaylist(latestReleasedAlbum []*spotify.SimplifiedAlbumO
 	c.AddLatestToPlaylist(newReleasedTracks)
 }
 
-func GetFollowedArtistsLatest(followedArtists []spotify.Artist, client *spotify.Client) []*spotify.SimplifiedAlbumObject {
-	var newReleases = []*spotify.SimplifiedAlbumObject{}
+func GetFollowedArtistsLatest(followedArtists []models.Artist, client *models.Client) []*models.SimplifiedAlbumObject {
+	var newReleases = []*models.SimplifiedAlbumObject{}
 
 	artistsAlbums := GetFollowedArtistAlbums(client, followedArtists)
 	for _, aa := range artistsAlbums {
@@ -86,7 +87,7 @@ func GetFollowedArtistsLatest(followedArtists []spotify.Artist, client *spotify.
 // GetMonthyReleases : Check if albums released less than a month ago
 // TODO: Should implement a way to fetch a sclice (newReleases) to only return
 // the ones that were not been fetch allready this month from another use of the function
-func GetMonthyReleases(artistAlbum *spotify.SimplifiedAlbumObject) bool {
+func GetMonthyReleases(artistAlbum *models.SimplifiedAlbumObject) bool {
 	formReleaseDate, _ := time.Parse(layoutISO, artistAlbum.ReleaseDate)
 	timeDiff := time.Since(formReleaseDate)
 	if timeDiff.Hours() < 730 {
@@ -96,8 +97,8 @@ func GetMonthyReleases(artistAlbum *spotify.SimplifiedAlbumObject) bool {
 }
 
 // GetArtistAlbums : Get all the albums of artists
-func GetFollowedArtistAlbums(client *spotify.Client, artists []spotify.Artist) []*spotify.SimplifiedAlbumObject {
-	var allAlbums = []*spotify.SimplifiedAlbumObject{}
+func GetFollowedArtistAlbums(client *models.Client, artists []models.Artist) []*models.SimplifiedAlbumObject {
+	var allAlbums = []*models.SimplifiedAlbumObject{}
 	for _, a := range artists {
 		result, err := client.GetArtistAlbums(a.ID)
 		if err != nil {
@@ -109,14 +110,14 @@ func GetFollowedArtistAlbums(client *spotify.Client, artists []spotify.Artist) [
 	return allAlbums
 }
 
-func PrintArtistWithAlbums(a spotify.Artist, albums []*spotify.SimplifiedAlbumObject) {
+func PrintArtistWithAlbums(a models.Artist, albums []*models.SimplifiedAlbumObject) {
 	fmt.Println("Artist : " + a.Name)
 	for i, a := range albums {
 		fmt.Println(i, a.Name)
 	}
 }
 
-func GetCurrentUser(client *spotify.Client) {
+func GetCurrentUser(client *models.Client) {
 	// use the client to make calls that require authorization
 	user, err := client.CurrentUser()
 	if err != nil {
@@ -125,12 +126,12 @@ func GetCurrentUser(client *spotify.Client) {
 	fmt.Println("You are logged in as : ", user.DisplayName)
 }
 
-func GetFollowedArtists(client *spotify.Client) []spotify.Artist {
+func GetFollowedArtists(client *models.Client) []models.Artist {
 	var lastArtistID = ""
-	var artistList = []spotify.Artist{}
+	var artistList = []models.Artist{}
 	for {
 		// Get the a list of followed artists
-		artists, err := client.FollowedList(50, lastArtistID)
+		artists, err := client.GetFollowedArtists(50, lastArtistID)
 		artistList = append(artistList, artists.Artists...)
 		if err != nil {
 			log.Fatal(err)
@@ -144,7 +145,7 @@ func GetFollowedArtists(client *spotify.Client) []spotify.Artist {
 	return artistList
 }
 
-func PrintFollowedArtists(artists []spotify.Artist) {
+func PrintFollowedArtists(artists []models.Artist) {
 	for i, a := range artists {
 		fmt.Println(i, a.Name)
 	}

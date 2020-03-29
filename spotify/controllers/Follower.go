@@ -4,8 +4,6 @@ import (
 	"net/http"
 
 	"../Models"
-
-	"github.com/gin-gonic/gin"
 )
 
 //List all followers

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/Kozehh/SpotifyFunc/spotify/models"
 	"golang.org/x/oauth2"
 )
 
@@ -77,12 +78,12 @@ func (a Authenticator) Token(state string, req *http.Request) (*oauth2.Token, er
 }
 
 // NewClient : Creates a Client that will use the specified access token for its API requests.
-func (a Authenticator) NewClient(token *oauth2.Token) Client {
+func (a Authenticator) NewClient(token *oauth2.Token) models.Client {
 	// Create a new http client using the token and current context
 	client := a.config.Client(a.context, token)
 	// The app client object is now the new one created
-	return Client{
-		http:    client,
-		baseURL: baseAddress,
+	return models.Client{
+		Http:    client,
+		BaseURL: models.BaseAddress,
 	}
 }
